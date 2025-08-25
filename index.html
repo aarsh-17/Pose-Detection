@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Medical Pose Detection & Analysis Suite</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Medical Pose Detection & Analysis Suite</h1>
+            <div id="status">Click Start Camera to begin</div>
+        </div>
+        
+        <div class="controls">
+            <button onclick="startCamera()">📷 Start Camera</button>
+            <button onclick="loadAI()" id="aiBtn" disabled>🧠 Load AI Model</button>
+            <button onclick="startDetection()" id="detectBtn" disabled>🔍 Start Detection</button>
+            <button onclick="stopDetection()" id="stopBtn" disabled class="danger">⏹ Stop Detection</button>
+            <button onclick="resetCounters()" id="resetBtn">🔄 Reset Counters</button>
+        </div>
+        
+        <div class="main-content">
+            <div id="video-container">
+                <video id="video" width="640" height="480" autoplay muted></video>
+                <canvas id="canvas" width="640" height="480"></canvas>
+            </div>
+            
+            <div class="info-panel">
+                <div class="metric" id="posture-metric">
+                    <h3>🧘 Posture Analysis</h3>
+                    <p><span class="posture-indicator good"></span><span id="posture-status">Standing by...</span></p>
+                    <p id="posture-advice">Start detection to analyze posture</p>
+                </div>
+                
+                <div class="metric" id="position-metric">
+                    <h3>📍 Body Position</h3>
+                    <p>Position: <span id="body-position">Unknown</span></p>
+                    <p>Confidence: <span id="position-confidence">0%</span></p>
+                    <div class="debug-info" id="position-debug">
+                        Hip Y: 0 | Knee Y: 0 | Hip-Knee Diff: 0
+                    </div>
+                </div>
+                
+                <div class="metric">
+                    <h3>⏱ Session Time</h3>
+                    <p class="large-number" id="session-time">00:00</p>
+                </div>
+                
+                <div class="metric">
+                    <h3>📊 Detection Stats</h3>
+                    <p>Poses Detected: <span id="pose-count">0</span></p>
+                    <p>Avg Confidence: <span id="avg-confidence">0%</span></p>
+                    <p>FPS: <span id="fps-display">0</span></p>
+                </div>
+                
+                <div class="exercise-counter">
+                    <h3>💪 Exercise Counter</h3>
+                    <div class="counter-display" id="exercise-count">0</div>
+                    <p>Squats Detected</p>
+                    <button onclick="toggleExerciseMode()" id="exerciseBtn">Enable Counting</button>
+                    <div class="squat-indicator" id="squat-indicator">Ready to count squats</div>
+                    <div class="debug-info" id="squat-debug">
+                        State: neutral | Hip: 0 | Knee: 0 | Diff: 0
+                    </div>
+                </div>
+
+                <div class="medical-panel">
+                    <h3>🩺 Medical Assessment Suite</h3>
+                    
+                    <div class="medical-tabs">
+                        <button class="tab-btn active" onclick="switchMedicalTab('posture')">Posture</button>
+                        <button class="tab-btn" onclick="switchMedicalTab('fall')">Fall Risk</button>
+                        <button class="tab-btn" onclick="switchMedicalTab('therapy')">PT Session</button>
+                        <button class="tab-btn" onclick="switchMedicalTab('scoliosis')">Scoliosis</button>
+                    </div>
+                    
+                    <!-- Postural Assessment -->
+                    <div id="posture-medical" class="medical-content active">
+                        <div class="assessment-grid">
+                            <div class="score-display" id="posture-score">
+                                <div class="large-number">0</div>
+                                <p>Posture Score</p>
+                            </div>
+                            <div class="score-display" id="clinical-grade">
+                                <div style="font-size: 18px; font-weight: bold;">N/A</div>
+                                <p>Clinical Grade</p>
+                            </div>
+                        </div>
+                        <div class="report-section">
+                            <h4>Assessment Details</h4>
+                            <p id="posture-clinical">Start detection for clinical assessment</p>
+                            <button onclick="generatePostureReport()" class="tab-btn">📄 Generate Report</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Fall Prevention -->
+                    <div id="fall-medical" class="medical-content">
+                        <div class="assessment-grid">
+                            <div class="score-display" id="fall-risk-score">
+                                <div class="large-number">0</div>
+                                <p>Fall Risk %</p>
+                            </div>
+                            <div class="score-display" id="balance-score">
+                                <div class="large-number">0</div>
+                                <p>Balance Score</p>
+                            </div>
+                        </div>
+                        <div id="fall-alerts"></div>
+                        <button onclick="startBalanceTest()" class="tab-btn">🧘 Start Balance Test</button>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="balance-progress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- PT Session -->
+                    <div id="therapy-medical" class="medical-content">
+                        <div class="assessment-grid">
+                            <div class="score-display">
+                                <div class="large-number" id="pt-exercises">0</div>
+                                <p>Exercises Done</p>
+                            </div>
+                            <div class="score-display">
+                                <div class="large-number" id="pt-accuracy">0%</div>
+                                <p>Form Accuracy</p>
+                            </div>
+                        </div>
+                        <div class="report-section">
+                            <h4>Session Notes</h4>
+                            <p id="pt-notes">No active session</p>
+                            <button onclick="startPTSession()" class="tab-btn">🏃 Start PT Session</button>
+                            <button onclick="endPTSession()" class="tab-btn danger">📋 End & Document</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Scoliosis Screening -->
+                    <div id="scoliosis-medical" class="medical-content">
+                        <div class="scoliosis-grid">
+                            <div class="angle-display">
+                                <div style="font-size: 18px; font-weight: bold;" id="cobb-angle">0°</div>
+                                <p>Cobb Angle</p>
+                            </div>
+                            <div class="angle-display">
+                                <div style="font-size: 18px; font-weight: bold;" id="trunk-rotation">0°</div>
+                                <p>Trunk Rotation</p>
+                            </div>
+                            <div class="angle-display">
+                                <div style="font-size: 18px; font-weight: bold;" id="shoulder-level">0mm</div>
+                                <p>Shoulder Level</p>
+                            </div>
+                        </div>
+                        <div class="alert-box" id="scoliosis-alert">
+                            Position patient for Adams Forward Bend Test
+                        </div>
+                        <button onclick="startScoliosisScreen()" class="tab-btn">📐 Start Screening</button>
+                        <button onclick="captureReading()" class="tab-btn">📷 Capture Reading</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.0/dist/pose-detection.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
