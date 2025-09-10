@@ -1,4 +1,5 @@
 // script.js - Medical Pose Detection & Analysis Suite
+let collectedSamples = [];   // store all samples here
 
 // DOM Elements
 const video = document.getElementById('video');
@@ -70,6 +71,9 @@ function log(msg, type = 'info') {
         status.style.background = '#444';
     }
 }
+
+
+
 
 // Camera functions
 async function startCamera() {
@@ -171,7 +175,7 @@ function startSessionTimer() {
         }
     }, 1000);
 }
-
+let lastKeypoints=[];
 // Main detection loop
 async function detectLoop() {
     if (!isDetecting) return;
@@ -179,10 +183,12 @@ async function detectLoop() {
     try {
         const poses = await detector.estimatePoses(video);
         
+        
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         if (poses.length > 0) {
             const pose = poses[0];
+            lastKeypoints = pose.keypoints;
             drawPose(pose);
             analyzePose(pose);
             analyzeMedicalPose(pose);
@@ -1444,3 +1450,26 @@ window.addEventListener('beforeunload', () => {
         clearInterval(sessionTimer);
     }
 });
+
+// To collect samples for training
+function captureSample(label, keypoints) {
+  const sample = {
+    label: label,
+    timestamp: Date.now(),
+    keypoints: keypoints.map(k => ({
+      name: k.name,
+      x: k.x,
+      y: k.y,
+      score: k.score
+    }))
+  };
+  collectedSamples.push(sample);
+}
+function downloadSamples() {
+  const blob = new Blob([collectedSamples.map(s => JSON.stringify(s)).join("\n")],
+                        {type: "application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "samples.jsonl";  // JSON lines format
+  a.click();
+}

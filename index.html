@@ -17,6 +17,11 @@
             <button onclick="startDetection()" id="detectBtn" disabled>🔍 Start Detection</button>
             <button onclick="stopDetection()" id="stopBtn" disabled class="danger">⏹ Stop Detection</button>
             <button onclick="resetCounters()" id="resetBtn">🔄 Reset Counters</button>
+            <button onclick="captureSample('GoodPosture', lastKeypoints)">Save Good</button>
+            <button onclick="captureSample('BadPosture', lastKeypoints)">Save Bad</button>
+            <button onclick="downloadSamples()">Download Dataset</button>
+
+
         </div>
         
         <div class="main-content">
